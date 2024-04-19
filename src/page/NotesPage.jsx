@@ -8,6 +8,7 @@ import { usePutRequest } from '../utils/hooks/usePutRequest';
 const NotesPage = () => {
     const [notes, setNotes] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
     const { isLoading, data, error } = useGetRequest('/notes');
     const { loading: putting, error: putError, success: putSuccess, putData } = usePutRequest('/notes');
     const toast = useToast();
@@ -21,6 +22,10 @@ const NotesPage = () => {
     const handleSelectNote = (note) => {
         setSelectedNote(note);
     };
+
+    const handleSearch = (term) => {
+        setSearchTerm(term);
+    }
 
     const handlePinNote = async (id) => {
         const noteToPin = notes.find(note => note.id === id);
@@ -121,18 +126,18 @@ const NotesPage = () => {
 
     return (
         <>
-            <Flex direction={{ base: 'column', lg: 'row' }} h="100vh">
-                <Flex w="300px" p={4} overflowY="auto" bg="blue.800" color="whiteAlpha.900">
-                    <NotesList notes={notes} onSelectNote={handleSelectNote} onDeleteNote={handleDeleteNote} onPinNote={handlePinNote} isLoading={isLoading} />
-                </Flex>
-                <Flex flex="1" p={2} h="100vh">
-                    <Box w="100%" h="100%">
-                        <NoteDetail note={selectedNote} onSave={handleSaveNote} onCancel={handleCancelEdit} />
-                    </Box>
-                </Flex>
+        <Flex direction={{ base: 'column', lg: 'row' }} h="100vh">
+            <Flex w="300px" p={4} overflowY="auto" bg="blue.800" color="whiteAlpha.900">
+                <NotesList notes={notes} onSelectNote={handleSelectNote} onDeleteNote={handleDeleteNote} onPinNote={handlePinNote} isLoading={isLoading} onSearch={handleSearch} />
             </Flex>
+            <Flex flex="1" p={2} h="100vh">
+                <Box w="100%" h="100%">
+                    <NoteDetail note={selectedNote} onSave={handleSaveNote} onCancel={handleCancelEdit} searchTerm={searchTerm} />
+                </Box>
+            </Flex>
+        </Flex>
 
-        </>
+    </>
     );
 };
 

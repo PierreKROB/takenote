@@ -3,7 +3,13 @@ import { Box, Text, VStack, Spinner, IconButton, Flex, Spacer, Modal, ModalOverl
 import { FaTrashAlt } from 'react-icons/fa';
 import { TiPinOutline } from "react-icons/ti";
 
-const NotesList = ({ notes, onSelectNote, onDeleteNote, onPinNote, isLoading }) => {
+// Fonction pour surligner les correspondances dans un texte
+const highlightMatches = (text, searchTerm) => {
+  const regex = new RegExp(searchTerm, 'gi');
+  return text.replace(regex, (match) => `<mark>${match}</mark>`);
+};
+
+const NotesList = ({ notes, onSelectNote, onDeleteNote, onPinNote, isLoading, selectedNote }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,6 +34,11 @@ const NotesList = ({ notes, onSelectNote, onDeleteNote, onPinNote, isLoading }) 
 
   const handlePinNote = (id) => {
     onPinNote(id);
+  };
+
+  // Fonction pour rendre le titre et le contenu de la note avec les correspondances surlignées
+  const renderHighlightedText = (text) => {
+    return { __html: highlightMatches(text, searchTerm) };
   };
 
   const filteredNotes = notes.filter(note => {
@@ -71,9 +82,8 @@ const NotesList = ({ notes, onSelectNote, onDeleteNote, onPinNote, isLoading }) 
               fontWeight="bold"
               isTruncated
               w="calc(100% - 80px)"
-            >
-              {note.title}
-            </Text>
+              dangerouslySetInnerHTML={renderHighlightedText(note.title)}
+            />
 
             <IconButton
               icon={<TiPinOutline />}
