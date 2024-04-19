@@ -5,7 +5,7 @@ import Spacebar from '../components/Spacebar';
 const MainLayout = () => {
     return (
         <div style={{ display: 'flex' }}>
-            <Spacebar />
+            {/* <Spacebar /> */}
             <div style={{ flex: 1, padding: '20px' }}>
                 <Outlet />
             </div>

@@ -1,37 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { Flex, useToast } from '@chakra-ui/react';
+import { Flex, Box, useToast } from '@chakra-ui/react';
 import NotesList from '../components/NotesList';
 import NoteDetail from '../components/NoteDetail';
+import { useGetRequest } from '../utils/hooks/useGetRequest';
+import { usePutRequest } from '../utils/hooks/usePutRequest';
 
 const NotesPage = () => {
     const [notes, setNotes] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const { isLoading, data, error } = useGetRequest('/notes');
+    const { loading: putting, error: putError, success: putSuccess, putData } = usePutRequest('/notes');
     const toast = useToast();
 
     useEffect(() => {
-        setIsLoading(true);
-        fetch('http://localhost:3001/notes')
-            .then(response => response.json())
-            .then(data => {
-                setNotes(data);
-                setIsLoading(false);
-            })
-            .catch(error => {
-                console.error('Failed to fetch notes:', error);
-                setIsLoading(false);
+        if (data) {
+            setNotes(data);
+        }
+    }, [data]);
+
+    const handleSelectNote = (note) => {
+        setSelectedNote(note);
+    };
+
+    const handlePinNote = async (id) => {
+        const noteToPin = notes.find(note => note.id === id);
+        if (noteToPin) {
+            const updatedNote = { ...noteToPin, isPinned: !noteToPin.isPinned };
+            await putData(`/notes/${id}`, updatedNote);
+            
+            if (!putError) {
+                setNotes(currentNotes =>
+                    currentNotes.map(note =>
+                        note.id === id ? updatedNote : note
+                    )
+                );
                 toast({
-                    title: 'Erreur de chargement',
-                    description: "Un problème est survenu lors du chargement des notes.",
+                    title: `Note ${updatedNote.isPinned ? 'épinglée' : 'désépinglée'}`,
+                    description: `La note a été ${updatedNote.isPinned ? 'épinglée' : 'désépinglée'} avec succès.`,
+                    status: 'success',
+                    duration: 5000,
+                    isClosable: true,
+                });
+            } else {
+                toast({
+                    title: 'Erreur lors de l\'épinglage',
+                    description: putError,
                     status: 'error',
                     duration: 5000,
                     isClosable: true,
                 });
-            });
-    }, [toast]);
-
-    const handleSelectNote = (note) => {
-        setSelectedNote(note);
+            }
+        }
     };
 
     const handleSaveNote = (note) => {
@@ -56,8 +75,8 @@ const NotesPage = () => {
                     setNotes(notes.map(n => n.id === note.id ? data : n));
                 } else {
                     setNotes([...notes, data]);
+                    setSelectedNote(null); // Réinitialise la note sélectionnée après la création d'une nouvelle note
                 }
-                setSelectedNote(null);
                 toast({
                     title: isUpdate ? 'Note mise à jour.' : 'Note créée.',
                     description: isUpdate ? "La note a été mise à jour avec succès." : "Une nouvelle note a été créée avec succès.",
@@ -90,21 +109,29 @@ const NotesPage = () => {
         setSelectedNote(null);
     };
 
+    if (error) {
+        toast({
+            title: 'Erreur de chargement',
+            description: "Un problème est survenu lors du chargement des notes.",
+            status: 'error',
+            duration: 5000,
+            isClosable: true,
+        });
+    }
+
     return (
         <>
-
-            <Flex direction={{ base: 'column', lg: 'row' }}>
-                <Flex w={{ base: '100%', lg: '30%' }} p={4} overflowY="auto">
-                    <NotesList notes={notes} onSelectNote={handleSelectNote} onDeleteNote={handleDeleteNote} isLoading={isLoading} />
+            <Flex direction={{ base: 'column', lg: 'row' }} h="100vh">
+                <Flex w="300px" p={4} overflowY="auto" bg="blue.800" color="whiteAlpha.900">
+                    <NotesList notes={notes} onSelectNote={handleSelectNote} onDeleteNote={handleDeleteNote} onPinNote={handlePinNote} isLoading={isLoading} />
                 </Flex>
-                <Flex flex="1" p={4}>
-                    {selectedNote ? (
+                <Flex flex="1" p={2} h="100vh">
+                    <Box w="100%" h="100%">
                         <NoteDetail note={selectedNote} onSave={handleSaveNote} onCancel={handleCancelEdit} />
-                    ) : (
-                        <NoteDetail onSave={handleSaveNote} onCancel={handleCancelEdit} />
-                    )}
+                    </Box>
                 </Flex>
             </Flex>
+
         </>
     );
 };
