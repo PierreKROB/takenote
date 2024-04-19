@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Box, Text, VStack, Spinner, IconButton, Flex, Spacer, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button } from '@chakra-ui/react';
+import { Box, Text, VStack, Spinner, IconButton, Flex, Spacer, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button, Input } from '@chakra-ui/react';
 import { FaTrashAlt } from 'react-icons/fa';
 import { TiPinOutline } from "react-icons/ti";
 
 const NotesList = ({ notes, onSelectNote, onDeleteNote, onPinNote, isLoading }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleDeleteNote = (id) => {
     setNoteToDelete(id);
@@ -29,6 +30,12 @@ const NotesList = ({ notes, onSelectNote, onDeleteNote, onPinNote, isLoading }) 
     onPinNote(id);
   };
 
+  const filteredNotes = notes.filter(note => {
+    const titleMatch = note.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const contentMatch = note.content.toLowerCase().includes(searchTerm.toLowerCase());
+    return titleMatch || contentMatch;
+  });
+
   if (isLoading) {
     return (
       <VStack>
@@ -38,64 +45,70 @@ const NotesList = ({ notes, onSelectNote, onDeleteNote, onPinNote, isLoading }) 
   }
 
   return (
-    <VStack spacing={1} >
-    {notes
-      .sort((a, b) => b.isPinned - a.isPinned)
-      .map(note => (
-        <Box
-          key={note.id}
-          onClick={() => handleSelectNote(note)}
-          p={4}
-          bg="blue.800"
-          color="whiteAlpha.900"
-          cursor="pointer"
-          _hover={{ bg: 'blue.600' }}
-          borderRadius="md"
-          position="relative"
-          w="280px"
-        >
-          <Text
-            fontWeight="bold"
-            isTruncated
-            w="calc(100% - 80px)"
+    <VStack spacing={1}>
+      <Input
+        placeholder="Rechercher..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        mb={4}
+      />
+      {filteredNotes
+        .sort((a, b) => b.isPinned - a.isPinned)
+        .map(note => (
+          <Box
+            key={note.id}
+            onClick={() => handleSelectNote(note)}
+            p={4}
+            bg="blue.800"
+            color="whiteAlpha.900"
+            cursor="pointer"
+            _hover={{ bg: 'blue.600' }}
+            borderRadius="md"
+            position="relative"
+            w="280px"
           >
-            {note.title}
-          </Text>
+            <Text
+              fontWeight="bold"
+              isTruncated
+              w="calc(100% - 80px)"
+            >
+              {note.title}
+            </Text>
 
-          <IconButton
-            icon={<TiPinOutline />}
-            aria-label="Pin note"
-            color={note.isPinned ? "red.500" : "white"}
-            variant="ghost"
-            position="absolute"
-            top="50%"
-            transform="translateY(-50%)"
-            right="60px"
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePinNote(note.id);
-            }}
-            size="sm"
-            isRound
-          />
-          <IconButton
-            icon={<FaTrashAlt />}
-            aria-label="Delete note"
-            colorScheme="red"
-            variant="ghost"
-            position="absolute"
-            top="50%"
-            transform="translateY(-50%)"
-            right="16px"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteNote(note.id);
-            }}
-            size="sm"
-            isRound
-          />
-        </Box>
-      ))}
+            <IconButton
+              icon={<TiPinOutline />}
+              aria-label="Pin note"
+              color={note.isPinned ? "red.500" : "white"}
+              variant="ghost"
+              position="absolute"
+              top="50%"
+              transform="translateY(-50%)"
+              right="60px"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePinNote(note.id);
+              }}
+              size="sm"
+              isRound
+            />
+            <IconButton
+              icon={<FaTrashAlt />}
+              aria-label="Delete note"
+              colorScheme="red"
+              variant="ghost"
+              position="absolute"
+              top="50%"
+              transform="translateY(-50%)"
+              right="16px"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteNote(note.id);
+              }}
+              size="sm"
+              isRound
+            />
+          </Box>
+        ))}
       
       {/* Modal de confirmation de suppression */}
       <Modal isOpen={showDeleteModal} onClose={handleCancelDelete}>
